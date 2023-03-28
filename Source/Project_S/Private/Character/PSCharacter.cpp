@@ -44,7 +44,7 @@ APSCharacter::APSCharacter()
 	Camera->SetRelativeLocation(FVector(0.0f, 0.0f, 10.0f));
 
 	// Set Animation
-	static ConstructorHelpers::FClassFinder<UAnimInstance> Mannequin_Anim(TEXT("/Game/AnimStarterPack/UE4ASP_HeroTPP_AnimBlueprint.UE4ASP_HeroTPP_AnimBlueprint_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> Mannequin_Anim(TEXT("/Game/Project_S/Animations/PSCharacterAnimBlueprint.PSCharacterAnimBlueprint_C"));
 	if (Mannequin_Anim.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(Mannequin_Anim.Class);
