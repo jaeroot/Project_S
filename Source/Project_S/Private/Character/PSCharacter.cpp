@@ -29,6 +29,7 @@ APSCharacter::APSCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+	ControlRotationBlocked = false;
 
 	// Set Spring Arm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -58,6 +59,8 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APSCharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &APSCharacter::Attack);
+	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Pressed, this, &APSCharacter::BlockControlRotation);
+	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Released, this, &APSCharacter::ReleaseControlRotation);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &APSCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &APSCharacter::LeftRight);
@@ -88,15 +91,43 @@ void APSCharacter::BeginPlay()
 }
 
 
+void APSCharacter::BlockControlRotation()
+{
+	ControlRotationBlocked = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+}
+
+
+void APSCharacter::ReleaseControlRotation()
+{
+	ControlRotationBlocked = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+}
+
+
 void APSCharacter::UpDown(float NewAxisValue)
 {
-	AddMovementInput(FRotationMatrix(FRotator(0, GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::X), NewAxisValue);
+	if (ControlRotationBlocked)
+	{
+		AddMovementInput(FRotationMatrix(FRotator(0, GetActorRotation().Yaw, 0)).GetUnitAxis(EAxis::X), NewAxisValue);
+	}
+	else
+	{
+		AddMovementInput(FRotationMatrix(FRotator(0, GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::X), NewAxisValue);
+	}
 }
 
 
 void APSCharacter::LeftRight(float NewAxisValue)
 {
-	AddMovementInput(FRotationMatrix(FRotator(0, GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), NewAxisValue);
+	if (ControlRotationBlocked)
+	{
+		AddMovementInput(FRotationMatrix(FRotator(0, GetActorRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), NewAxisValue);
+	}
+	else
+	{
+		AddMovementInput(FRotationMatrix(FRotator(0, GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), NewAxisValue);
+	}
 }
 
 

@@ -28,6 +28,8 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	void BlockControlRotation();
+	void ReleaseControlRotation();
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
@@ -40,4 +42,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
+
+private:
+	bool ControlRotationBlocked;
 };
