@@ -21,15 +21,20 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void Jump() override;
 	void Attack();
+	ECharacterMotion GetCurrentCharacterMotion();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void SetCharacterMotion(ECharacterMotion NewCharacterMotion);
+
 private:
 	void BlockControlRotation();
 	void ReleaseControlRotation();
+	void DoCrouch();
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
@@ -42,6 +47,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
+
+
+protected:
+	ECharacterMotion CurrentCharacterMotion;
 
 private:
 	bool ControlRotationBlocked;

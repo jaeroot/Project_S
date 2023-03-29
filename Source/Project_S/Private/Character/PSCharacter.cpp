@@ -24,6 +24,9 @@ APSCharacter::APSCharacter()
 	// Set Movement
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+	//GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	//GetCharacterMovement()->CrouchedHalfHeight = 60.0f;
+	CurrentCharacterMotion = ECharacterMotion::Stand;
 
 	// Set Control Rotation
 	bUseControllerRotationPitch = false;
@@ -61,6 +64,7 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &APSCharacter::Attack);
 	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Pressed, this, &APSCharacter::BlockControlRotation);
 	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Released, this, &APSCharacter::ReleaseControlRotation);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &APSCharacter::DoCrouch);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &APSCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &APSCharacter::LeftRight);
@@ -73,7 +77,20 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void APSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+}
 
+
+void APSCharacter::Jump()
+{
+	if (CurrentCharacterMotion == ECharacterMotion::Stand)
+	{
+		Super::Jump();
+	}
+	else
+	{
+		SetCharacterMotion(ECharacterMotion::Stand);
+	}
 }
 
 
@@ -83,11 +100,36 @@ void APSCharacter::Attack()
 }
 
 
+ECharacterMotion APSCharacter::GetCurrentCharacterMotion()
+{
+	return CurrentCharacterMotion;
+}
+
+
 // Called when the game starts or when spawned
 void APSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+
+void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
+{
+	PSCHECK(CurrentCharacterMotion != NewCharacterMotion);
+	CurrentCharacterMotion = NewCharacterMotion;
+
+	switch (CurrentCharacterMotion)
+	{
+	case ECharacterMotion::Stand:
+		break;
+	case ECharacterMotion::Crouch:
+		break;
+	case ECharacterMotion::Prone:
+		break;
+	default:
+		break;
+	}
 }
 
 
@@ -102,6 +144,23 @@ void APSCharacter::ReleaseControlRotation()
 {
 	ControlRotationBlocked = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+}
+
+
+void APSCharacter::DoCrouch()
+{
+	if (CurrentCharacterMotion == ECharacterMotion::Stand)
+	{
+		SetCharacterMotion(ECharacterMotion::Crouch);
+	}
+	else if (CurrentCharacterMotion == ECharacterMotion::Crouch)
+	{
+		SetCharacterMotion(ECharacterMotion::Stand);
+	}
+	else
+	{
+		PSLOG(Warning, TEXT("Cannot Crouch"));
+	}
 }
 
 

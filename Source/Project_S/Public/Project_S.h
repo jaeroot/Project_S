@@ -4,6 +4,14 @@
 
 #include "EngineMinimal.h"
 
+UENUM(BlueprintType)
+enum class ECharacterMotion : uint8
+{
+	Stand,
+	Crouch,
+	Prone
+};
+
 DECLARE_LOG_CATEGORY_EXTERN(Project_S, Log, All);
 #define PSLOG_CALLINFO (FString(__FUNCTION__) + TEXT("(") + FString::FromInt(__LINE__) + TEXT(")"))
 #define PSLOG_S(Verbosity) UE_LOG(Project_S, Verbosity, TEXT("%s"), *PSLOG_CALLINFO)

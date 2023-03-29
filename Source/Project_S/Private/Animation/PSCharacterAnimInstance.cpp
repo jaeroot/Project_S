@@ -2,6 +2,7 @@
 
 
 #include "Animation/PSCharacterAnimInstance.h"
+#include "Character/PSCharacter.h"
 
 
 UPSCharacterAnimInstance::UPSCharacterAnimInstance()
@@ -10,6 +11,7 @@ UPSCharacterAnimInstance::UPSCharacterAnimInstance()
 	CurrentPawnSpeed = 0.0f;
 	CurrentPawnDirection = 0.0f;
 	IsInAir = false;
+	CurrentPawnMotion = ECharacterMotion::Stand;
 }
 
 
@@ -24,9 +26,10 @@ void UPSCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	CurrentPawnSpeed = CurrentPawnVelocity.Size();
 	CurrentPawnDirection = CalculateDirection(CurrentPawnVelocity, Pawn->GetActorRotation());
 
-	auto Character = Cast<ACharacter>(Pawn);
+	auto Character = Cast<APSCharacter>(Pawn);
 	if (Character)
 	{
 		IsInAir = Character->GetMovementComponent()->IsFalling();
+		CurrentPawnMotion = Character->GetCurrentCharacterMotion();
 	}
 }

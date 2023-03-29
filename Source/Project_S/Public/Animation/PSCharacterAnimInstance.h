@@ -30,4 +30,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess))
 		bool IsInAir;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess))
+		ECharacterMotion CurrentPawnMotion;
 };
