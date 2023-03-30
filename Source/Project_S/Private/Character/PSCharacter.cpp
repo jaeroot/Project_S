@@ -10,8 +10,13 @@ APSCharacter::APSCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	StandHalfHeight = 100.0f;
+	CrouchHalfHeight = 70.0f;
+	ProneHalfHeight = 45.0f;
+	Radius = 45.0f;
+
 	// Set Collision Capsule
-	GetCapsuleComponent()->InitCapsuleSize(45.0f, 100.0f);
+	GetCapsuleComponent()->InitCapsuleSize(Radius, StandHalfHeight);
 
 	// Set Mesh
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Mannequin(TEXT("/Game/AnimStarterPack/UE4_Mannequin/Mesh/SK_Mannequin.SK_Mannequin"));
@@ -19,7 +24,7 @@ APSCharacter::APSCharacter()
 	{
 		GetMesh()->SetSkeletalMesh(SK_Mannequin.Object);
 	}
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -100.0f), FRotator(0.0f, -90.0f, 0.0f));
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -StandHalfHeight), FRotator(0.0f, -90.0f, 0.0f));
 
 	// Set Movement
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
@@ -191,31 +196,7 @@ void APSCharacter::DoCrouch()
 	}
 	else if (CurrentCharacterMotion == ECharacterMotion::Crouch)
 	{
-		FHitResult HitResult;
-		FVector StartTrace = GetActorLocation();
-		FVector EndTrace = (GetActorUpVector() * 130) + StartTrace;
-		bool bResult = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			StartTrace,
-			EndTrace,
-			ECollisionChannel::ECC_Visibility
-		);
-
-# if ENABLE_DRAW_DEBUG
-
-		FColor DrawColor = bResult ? FColor::Green : FColor::Red;
-
-		DrawDebugLine(GetWorld(),
-			StartTrace,
-			EndTrace,
-			DrawColor,
-			false,
-			5.0f
-		);
-
-# endif
-
-		if (!bResult)
+		if (!CanStand(CrouchHalfHeight))
 		{
 			SetCharacterMotion(ECharacterMotion::Stand);
 		}
@@ -223,7 +204,6 @@ void APSCharacter::DoCrouch()
 		{
 			PSLOG(Warning, TEXT("Cannot Crouch"));
 		}
-
 	}
 	else
 	{
@@ -240,31 +220,7 @@ void APSCharacter::DoProne()
 	}
 	else if (CurrentCharacterMotion == ECharacterMotion::Prone)
 	{
-		FHitResult HitResult;
-		FVector StartTrace = GetActorLocation();
-		FVector EndTrace = (GetActorUpVector() * 155) + StartTrace;
-		bool bResult = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			StartTrace,
-			EndTrace,
-			ECollisionChannel::ECC_Visibility
-		);
-
-# if ENABLE_DRAW_DEBUG
-
-		FColor DrawColor = bResult ? FColor::Green : FColor::Red;
-
-		DrawDebugLine(GetWorld(),
-			StartTrace,
-			EndTrace,
-			DrawColor,
-			false,
-			5.0f
-		);
-
-# endif
-
-		if (!bResult)
+		if (!CanStand(ProneHalfHeight))
 		{
 			SetCharacterMotion(ECharacterMotion::Stand);
 		}
@@ -320,13 +276,65 @@ void APSCharacter::Turn(float NewAxisValue)
 
 void APSCharacter::CrouchInterp(float Value)
 {
-	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(100.0f, 70.0f, Value));
-	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-100.0f, -70.0f, Value)));
+	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(StandHalfHeight, CrouchHalfHeight, Value));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-StandHalfHeight, -CrouchHalfHeight, Value)));
 }
 
 
 void APSCharacter::ProneInterp(float Value)
 {
-	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(100.0f, 45.0f, Value));
-	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-100.0f, -45.0f, Value)));
+	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(StandHalfHeight, ProneHalfHeight, Value));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-StandHalfHeight, -ProneHalfHeight, Value)));
+}
+
+
+bool APSCharacter::CanStand(float HalfHeight)
+{
+	float Height = StandHalfHeight * 2 - HalfHeight - Radius;
+	FHitResult HitResult;
+	FVector StartTrace = GetActorLocation();
+	FVector EndTrace = (GetActorUpVector() * Height) + StartTrace;
+	/*bool bResult = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		StartTrace,
+		EndTrace,
+		ECollisionChannel::ECC_Visibility
+	);*/
+
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		StartTrace,
+		EndTrace,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Visibility,
+		FCollisionShape::MakeSphere(Radius));
+
+
+# if ENABLE_DRAW_DEBUG
+
+	FVector Center = (StartTrace + EndTrace) / 2;
+	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(GetActorUpVector()).ToQuat();
+	FColor DrawColor = bResult ? FColor::Green : FColor::Red;
+	float DebugLifeTime = 5.0f;
+
+	/*DrawDebugLine(GetWorld(),
+		StartTrace,
+		EndTrace,
+		DrawColor,
+		false,
+		5.0f
+	);*/
+
+	DrawDebugCapsule(GetWorld(),
+		Center,
+		Height * 0.5 + Radius,
+		Radius,
+		CapsuleRot,
+		DrawColor,
+		false,
+		DebugLifeTime);
+
+# endif
+
+	return bResult;
 }

@@ -51,6 +51,8 @@ private:
 	UFUNCTION()
 		void ProneInterp(float Value);
 
+	bool CanStand(float HalfHeight);
+
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -77,4 +79,8 @@ protected:
 
 private:
 	bool ControlRotationBlocked;
+	float StandHalfHeight;
+	float CrouchHalfHeight;
+	float ProneHalfHeight;
+	float Radius;
 };
