@@ -19,6 +19,8 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
+
+private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess))
 		FVector CurrentPawnVelocity;
 
@@ -33,4 +35,5 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess))
 		ECharacterMotion CurrentPawnMotion;
+
 };

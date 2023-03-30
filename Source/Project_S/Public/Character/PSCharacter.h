@@ -36,6 +36,7 @@ private:
 	void BlockControlRotation();
 	void ReleaseControlRotation();
 	void DoCrouch();
+	void DoProne();
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);

@@ -89,6 +89,7 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Pressed, this, &APSCharacter::BlockControlRotation);
 	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Released, this, &APSCharacter::ReleaseControlRotation);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &APSCharacter::DoCrouch);
+	PlayerInputComponent->BindAction(TEXT("Prone"), EInputEvent::IE_Pressed, this, &APSCharacter::DoProne);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &APSCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &APSCharacter::LeftRight);
@@ -190,11 +191,91 @@ void APSCharacter::DoCrouch()
 	}
 	else if (CurrentCharacterMotion == ECharacterMotion::Crouch)
 	{
-		SetCharacterMotion(ECharacterMotion::Stand);
+		FHitResult HitResult;
+		FVector StartTrace = GetActorLocation();
+		FVector EndTrace = (GetActorUpVector() * 130) + StartTrace;
+		bool bResult = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			StartTrace,
+			EndTrace,
+			ECollisionChannel::ECC_Visibility
+		);
+
+# if ENABLE_DRAW_DEBUG
+
+		FColor DrawColor = bResult ? FColor::Green : FColor::Red;
+
+		DrawDebugLine(GetWorld(),
+			StartTrace,
+			EndTrace,
+			DrawColor,
+			false,
+			5.0f
+		);
+
+# endif
+
+		if (!bResult)
+		{
+			SetCharacterMotion(ECharacterMotion::Stand);
+		}
+		else
+		{
+			PSLOG(Warning, TEXT("Cannot Crouch"));
+		}
+
 	}
 	else
 	{
 		PSLOG(Warning, TEXT("Cannot Crouch"));
+	}
+}
+
+
+void APSCharacter::DoProne()
+{
+	if (CurrentCharacterMotion == ECharacterMotion::Stand && !GetCharacterMovement()->IsFalling())
+	{
+		SetCharacterMotion(ECharacterMotion::Prone);
+	}
+	else if (CurrentCharacterMotion == ECharacterMotion::Prone)
+	{
+		FHitResult HitResult;
+		FVector StartTrace = GetActorLocation();
+		FVector EndTrace = (GetActorUpVector() * 155) + StartTrace;
+		bool bResult = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			StartTrace,
+			EndTrace,
+			ECollisionChannel::ECC_Visibility
+		);
+
+# if ENABLE_DRAW_DEBUG
+
+		FColor DrawColor = bResult ? FColor::Green : FColor::Red;
+
+		DrawDebugLine(GetWorld(),
+			StartTrace,
+			EndTrace,
+			DrawColor,
+			false,
+			5.0f
+		);
+
+# endif
+
+		if (!bResult)
+		{
+			SetCharacterMotion(ECharacterMotion::Stand);
+		}
+		else
+		{
+			PSLOG(Warning, TEXT("Cannot Prone"));
+		}
+	}
+	else
+	{
+		PSLOG(Warning, TEXT("Cannot Prone"));
 	}
 }
 
@@ -246,6 +327,6 @@ void APSCharacter::CrouchInterp(float Value)
 
 void APSCharacter::ProneInterp(float Value)
 {
-	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(100.0f, 50.0f, Value));
-	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-100.0f, -50.0f, Value)));
+	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(100.0f, 45.0f, Value));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-100.0f, -45.0f, Value)));
 }
