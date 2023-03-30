@@ -24,6 +24,7 @@ APSCharacter::APSCharacter()
 	// Set Movement
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	//GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	//GetCharacterMovement()->CrouchedHalfHeight = 60.0f;
 	CurrentCharacterMotion = ECharacterMotion::Stand;
@@ -40,6 +41,7 @@ APSCharacter::APSCharacter()
 	SpringArm->TargetArmLength = 300.0f;
 	SpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 30.0f));
 	SpringArm->bUsePawnControlRotation = true;
+	//SpringArm->bEnableCameraLag = true;
 
 	// Set Camera
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
@@ -52,6 +54,28 @@ APSCharacter::APSCharacter()
 	{
 		GetMesh()->SetAnimInstanceClass(Mannequin_Anim.Class);
 	}
+
+	// Set Crouch and Prone interp
+	CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CROUCHTIMELINE"));
+	ProneTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("PRONETIMELINE"));
+	CrouchTimelineFunction.BindUFunction(this, FName("CrouchInterp"));
+	ProneTimelineFunction.BindUFunction(this, FName("ProneInterp"));
+
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> Crouch_Curve(TEXT("/Game/Project_S/Animations/CrouchCurve.CrouchCurve"));
+	if (Crouch_Curve.Succeeded())
+	{
+		CrouchCurve = Crouch_Curve.Object;
+		CrouchTimeline->AddInterpFloat(CrouchCurve, CrouchTimelineFunction);
+	}
+	CrouchTimeline->SetLooping(false);
+
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> Prone_Curve(TEXT("/Game/Project_S/Animations/ProneCurve.ProneCurve"));
+	if (Crouch_Curve.Succeeded())
+	{
+		ProneCurve = Prone_Curve.Object;
+		ProneTimeline->AddInterpFloat(ProneCurve, ProneTimelineFunction);
+	}
+	ProneTimeline->SetLooping(false);
 }
 
 
@@ -117,15 +141,26 @@ void APSCharacter::BeginPlay()
 void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
 {
 	PSCHECK(CurrentCharacterMotion != NewCharacterMotion);
+
+	bool Crouched = false;
+	if (CurrentCharacterMotion == ECharacterMotion::Crouch)
+		Crouched = true;
+
 	CurrentCharacterMotion = NewCharacterMotion;
 
 	switch (CurrentCharacterMotion)
 	{
 	case ECharacterMotion::Stand:
+		Crouched ? CrouchTimeline->ReverseFromEnd() : ProneTimeline->ReverseFromEnd();		
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 		break;
 	case ECharacterMotion::Crouch:
+		CrouchTimeline->PlayFromStart();
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
 		break;
 	case ECharacterMotion::Prone:
+		ProneTimeline->PlayFromStart();
+		GetCharacterMovement()->MaxWalkSpeed = 150.0f;
 		break;
 	default:
 		break;
@@ -149,7 +184,7 @@ void APSCharacter::ReleaseControlRotation()
 
 void APSCharacter::DoCrouch()
 {
-	if (CurrentCharacterMotion == ECharacterMotion::Stand)
+	if (CurrentCharacterMotion == ECharacterMotion::Stand && !GetCharacterMovement()->IsFalling())
 	{
 		SetCharacterMotion(ECharacterMotion::Crouch);
 	}
@@ -199,4 +234,18 @@ void APSCharacter::LookUp(float NewAxisValue)
 void APSCharacter::Turn(float NewAxisValue)
 {
 	AddControllerYawInput(NewAxisValue);
+}
+
+
+void APSCharacter::CrouchInterp(float Value)
+{
+	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(100.0f, 70.0f, Value));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-100.0f, -70.0f, Value)));
+}
+
+
+void APSCharacter::ProneInterp(float Value)
+{
+	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(100.0f, 50.0f, Value));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-100.0f, -50.0f, Value)));
 }

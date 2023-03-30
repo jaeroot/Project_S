@@ -4,6 +4,7 @@
 
 #include "Project_S.h"
 #include "GameFramework/Character.h"
+#include "Components/TimelineComponent.h"
 #include "PSCharacter.generated.h"
 
 UCLASS()
@@ -40,6 +41,15 @@ private:
 	void LookUp(float NewAxisValue);
 	void Turn(float NewAxisValue);
 
+	FOnTimelineFloat CrouchTimelineFunction;
+	FOnTimelineFloat ProneTimelineFunction;
+
+	UFUNCTION()
+		void CrouchInterp(float Value);
+	
+	UFUNCTION()
+		void ProneInterp(float Value);
+
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -48,9 +58,21 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
 
+	UPROPERTY(VisibleAnywhere, Category = "Timeline")
+		UCurveFloat* CrouchCurve;
+
+	UPROPERTY(VisibleAnywhere, Category = "Timeline")
+		UCurveFloat* ProneCurve;
+
 
 protected:
 	ECharacterMotion CurrentCharacterMotion;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Timeline")
+		UTimelineComponent* CrouchTimeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Timeline")
+		UTimelineComponent* ProneTimeline;
 
 private:
 	bool ControlRotationBlocked;
