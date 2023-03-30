@@ -12,6 +12,7 @@ UPSCharacterAnimInstance::UPSCharacterAnimInstance()
 	CurrentPawnDirection = 0.0f;
 	IsInAir = false;
 	CurrentPawnMotion = ECharacterMotion::Stand;
+	IsRunning = false;
 }
 
 
@@ -31,5 +32,6 @@ void UPSCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		IsInAir = Character->GetMovementComponent()->IsFalling();
 		CurrentPawnMotion = Character->GetCurrentCharacterMotion();
+		IsRunning = Character->Running;
 	}
 }

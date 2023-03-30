@@ -37,6 +37,8 @@ private:
 	void ReleaseControlRotation();
 	void DoCrouch();
 	void DoProne();
+	void Run();
+	void StopRun();
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
@@ -67,6 +69,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 		UCurveFloat* ProneCurve;
 
+	bool Running;
 
 protected:
 	ECharacterMotion CurrentCharacterMotion;
@@ -79,8 +82,14 @@ protected:
 
 private:
 	bool ControlRotationBlocked;
+	FRotator ControlRotation;
+
 	float StandHalfHeight;
 	float CrouchHalfHeight;
 	float ProneHalfHeight;
 	float Radius;
+
+	bool RunInput;
+	bool MovingBack;
+	bool MovingSide;
 };

@@ -10,12 +10,11 @@ APSCharacter::APSCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Set Collision Capsule
 	StandHalfHeight = 100.0f;
 	CrouchHalfHeight = 70.0f;
 	ProneHalfHeight = 45.0f;
 	Radius = 45.0f;
-
-	// Set Collision Capsule
 	GetCapsuleComponent()->InitCapsuleSize(Radius, StandHalfHeight);
 
 	// Set Mesh
@@ -27,18 +26,23 @@ APSCharacter::APSCharacter()
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -StandHalfHeight), FRotator(0.0f, -90.0f, 0.0f));
 
 	// Set Movement
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	//GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	//GetCharacterMovement()->CrouchedHalfHeight = 60.0f;
 	CurrentCharacterMotion = ECharacterMotion::Stand;
+	Running = false;
+	RunInput = false;
+	MovingBack = false;
+	MovingSide = false;
 
 	// Set Control Rotation
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 	ControlRotationBlocked = false;
+	ControlRotation = FRotator::ZeroRotator;
 
 	// Set Spring Arm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -95,6 +99,8 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Released, this, &APSCharacter::ReleaseControlRotation);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &APSCharacter::DoCrouch);
 	PlayerInputComponent->BindAction(TEXT("Prone"), EInputEvent::IE_Pressed, this, &APSCharacter::DoProne);
+	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Pressed, this, &APSCharacter::Run);
+	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Released, this, &APSCharacter::StopRun);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &APSCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &APSCharacter::LeftRight);
@@ -107,7 +113,19 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void APSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
+	if (!MovingBack && !MovingSide && RunInput && CurrentCharacterMotion == ECharacterMotion::Stand)
+	{
+		Running = true;
+		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
+	}
+	else
+	{
+		Running = false;
+
+		if (CurrentCharacterMotion == ECharacterMotion::Stand)
+			GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	}
 }
 
 
@@ -177,14 +195,18 @@ void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
 void APSCharacter::BlockControlRotation()
 {
 	ControlRotationBlocked = true;
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	ControlRotation = GetControlRotation();
+	bUseControllerRotationYaw = false;
 }
 
 
 void APSCharacter::ReleaseControlRotation()
 {
 	ControlRotationBlocked = false;
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	//GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	Controller->SetControlRotation(ControlRotation);
+	bUseControllerRotationYaw = true;
 }
 
 
@@ -236,6 +258,18 @@ void APSCharacter::DoProne()
 }
 
 
+void APSCharacter::Run()
+{
+	RunInput = true;
+}
+
+
+void APSCharacter::StopRun()
+{
+	RunInput = false;
+}
+
+
 void APSCharacter::UpDown(float NewAxisValue)
 {
 	if (ControlRotationBlocked)
@@ -246,6 +280,8 @@ void APSCharacter::UpDown(float NewAxisValue)
 	{
 		AddMovementInput(FRotationMatrix(FRotator(0, GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::X), NewAxisValue);
 	}
+
+	MovingBack = NewAxisValue < 0.0f;
 }
 
 
@@ -259,6 +295,8 @@ void APSCharacter::LeftRight(float NewAxisValue)
 	{
 		AddMovementInput(FRotationMatrix(FRotator(0, GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), NewAxisValue);
 	}
+
+	MovingSide = NewAxisValue != 0.0f;
 }
 
 
