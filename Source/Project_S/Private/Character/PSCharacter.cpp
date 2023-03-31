@@ -151,13 +151,19 @@ void APSCharacter::Tick(float DeltaTime)
 
 void APSCharacter::Jump()
 {
+	if (IsCrouch || IsProne)
+		return;
+
 	if (CurrentCharacterMotion == ECharacterMotion::Stand)
 	{
 		Super::Jump();
 	}
 	else
 	{
-		SetCharacterMotion(ECharacterMotion::Stand);
+		if (CurrentCharacterMotion == ECharacterMotion::Crouch)
+			DoCrouch();
+		else if (CurrentCharacterMotion == ECharacterMotion::Prone)
+			DoProne();
 	}
 }
 
