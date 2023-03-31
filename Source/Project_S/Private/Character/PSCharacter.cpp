@@ -44,6 +44,18 @@ APSCharacter::APSCharacter()
 	ControlRotationBlocked = false;
 	ControlRotation = FRotator::ZeroRotator;
 
+	CameraRotTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("ROTTIMELINE"));
+	CameraRotTimelineFunction.BindUFunction(this, FName("CameraRotInterp"));
+	CameraRotTimelineFinish.BindUFunction(this, FName("CameraRotFinish"));
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> Camera_Rot_Curve(TEXT("/Game/Project_S/Animations/CameraRotCurve.CameraRotCurve"));
+	if (Camera_Rot_Curve.Succeeded())
+	{
+		CameraRotCurve = Camera_Rot_Curve.Object;
+		CameraRotTimeline->AddInterpFloat(CameraRotCurve, CameraRotTimelineFunction);
+		CameraRotTimeline->SetTimelineFinishedFunc(CameraRotTimelineFinish);
+	}
+	CameraRotTimeline->SetLooping(false);
+
 	// Set Spring Arm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	SpringArm->SetupAttachment(GetCapsuleComponent());
@@ -194,6 +206,9 @@ void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
 
 void APSCharacter::BlockControlRotation()
 {
+	if (CameraRotTimeline->IsPlaying())
+		CameraRotTimeline->Stop();
+
 	ControlRotationBlocked = true;
 	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	ControlRotation = GetControlRotation();
@@ -205,8 +220,7 @@ void APSCharacter::ReleaseControlRotation()
 {
 	ControlRotationBlocked = false;
 	//GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	Controller->SetControlRotation(ControlRotation);
-	bUseControllerRotationYaw = true;
+	CameraRotTimeline->PlayFromStart();
 }
 
 
@@ -302,13 +316,15 @@ void APSCharacter::LeftRight(float NewAxisValue)
 
 void APSCharacter::LookUp(float NewAxisValue)
 {
-	AddControllerPitchInput(NewAxisValue);
+	if (!CameraRotTimeline->IsPlaying())
+		AddControllerPitchInput(NewAxisValue);
 }
 
 
 void APSCharacter::Turn(float NewAxisValue)
 {
-	AddControllerYawInput(NewAxisValue);
+	if (!CameraRotTimeline->IsPlaying())
+		AddControllerYawInput(NewAxisValue);
 }
 
 
@@ -323,6 +339,19 @@ void APSCharacter::ProneInterp(float Value)
 {
 	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(StandHalfHeight, ProneHalfHeight, Value));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-StandHalfHeight, -ProneHalfHeight, Value)));
+}
+
+
+void APSCharacter::CameraRotInterp(float Value)
+{
+	FRotator CurrentRot = GetControlRotation();
+	Controller->SetControlRotation(FMath::Lerp(CurrentRot, ControlRotation, Value));
+}
+
+
+void APSCharacter::CameraRotFinish()
+{
+	bUseControllerRotationYaw = true;
 }
 
 

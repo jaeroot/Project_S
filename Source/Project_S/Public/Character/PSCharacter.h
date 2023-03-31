@@ -46,12 +46,20 @@ private:
 
 	FOnTimelineFloat CrouchTimelineFunction;
 	FOnTimelineFloat ProneTimelineFunction;
+	FOnTimelineFloat CameraRotTimelineFunction;
+	FOnTimelineEvent CameraRotTimelineFinish;
 
 	UFUNCTION()
 		void CrouchInterp(float Value);
 	
 	UFUNCTION()
 		void ProneInterp(float Value);
+
+	UFUNCTION()
+		void CameraRotInterp(float Value);
+
+	UFUNCTION()
+		void CameraRotFinish();
 
 	bool CanStand(float HalfHeight);
 
@@ -69,6 +77,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 		UCurveFloat* ProneCurve;
 
+	UPROPERTY(VisibleAnywhere, Category = "Timeline")
+		UCurveFloat* CameraRotCurve;
+
 	bool Running;
 
 protected:
@@ -79,6 +90,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Timeline")
 		UTimelineComponent* ProneTimeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Timeline")
+		UTimelineComponent* CameraRotTimeline;
 
 private:
 	bool ControlRotationBlocked;
