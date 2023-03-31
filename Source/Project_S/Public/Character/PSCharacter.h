@@ -45,15 +45,25 @@ private:
 	void Turn(float NewAxisValue);
 
 	FOnTimelineFloat CrouchTimelineFunction;
+	FOnTimelineEvent CrouchTimelineFinish;
+
 	FOnTimelineFloat ProneTimelineFunction;
+	FOnTimelineEvent ProneTimelineFinish;
+
 	FOnTimelineFloat CameraRotTimelineFunction;
 	FOnTimelineEvent CameraRotTimelineFinish;
 
 	UFUNCTION()
 		void CrouchInterp(float Value);
+
+	UFUNCTION()
+		void CrouchFinish();
 	
 	UFUNCTION()
 		void ProneInterp(float Value);
+
+	UFUNCTION()
+		void ProneFinish();
 
 	UFUNCTION()
 		void CameraRotInterp(float Value);
@@ -106,4 +116,7 @@ private:
 	bool RunInput;
 	bool MovingBack;
 	bool MovingSide;
+
+	bool IsCrouch;
+	bool IsProne;
 };

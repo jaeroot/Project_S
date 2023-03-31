@@ -36,6 +36,8 @@ APSCharacter::APSCharacter()
 	RunInput = false;
 	MovingBack = false;
 	MovingSide = false;
+	IsCrouch = false;
+	IsProne = false;
 
 	// Set Control Rotation
 	bUseControllerRotationPitch = false;
@@ -76,25 +78,31 @@ APSCharacter::APSCharacter()
 		GetMesh()->SetAnimInstanceClass(Mannequin_Anim.Class);
 	}
 
-	// Set Crouch and Prone interp
+	// Set Crouch interp
 	CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CROUCHTIMELINE"));
-	ProneTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("PRONETIMELINE"));
 	CrouchTimelineFunction.BindUFunction(this, FName("CrouchInterp"));
-	ProneTimelineFunction.BindUFunction(this, FName("ProneInterp"));
+	CrouchTimelineFinish.BindUFunction(this, FName("CrouchFinish"));
 
 	static ConstructorHelpers::FObjectFinder<UCurveFloat> Crouch_Curve(TEXT("/Game/Project_S/Animations/CrouchCurve.CrouchCurve"));
 	if (Crouch_Curve.Succeeded())
 	{
 		CrouchCurve = Crouch_Curve.Object;
 		CrouchTimeline->AddInterpFloat(CrouchCurve, CrouchTimelineFunction);
+		CrouchTimeline->SetTimelineFinishedFunc(CrouchTimelineFinish);
 	}
 	CrouchTimeline->SetLooping(false);
+
+	// Set Prone Interp
+	ProneTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("PRONETIMELINE"));
+	ProneTimelineFunction.BindUFunction(this, FName("ProneInterp"));
+	ProneTimelineFinish.BindUFunction(this, FName("ProneFinish"));
 
 	static ConstructorHelpers::FObjectFinder<UCurveFloat> Prone_Curve(TEXT("/Game/Project_S/Animations/ProneCurve.ProneCurve"));
 	if (Crouch_Curve.Succeeded())
 	{
 		ProneCurve = Prone_Curve.Object;
 		ProneTimeline->AddInterpFloat(ProneCurve, ProneTimelineFunction);
+		ProneTimeline->SetTimelineFinishedFunc(ProneTimelineFinish);
 	}
 	ProneTimeline->SetLooping(false);
 }
@@ -126,12 +134,12 @@ void APSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!MovingBack && !MovingSide && RunInput && CurrentCharacterMotion == ECharacterMotion::Stand)
+	if (!MovingBack && !MovingSide && RunInput && CurrentCharacterMotion == ECharacterMotion::Stand && !IsCrouch && !IsProne)
 	{
 		Running = true;
 		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
 	}
-	else
+	else if (!IsCrouch && !IsProne)
 	{
 		Running = false;
 
@@ -188,7 +196,6 @@ void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
 	{
 	case ECharacterMotion::Stand:
 		Crouched ? CrouchTimeline->ReverseFromEnd() : ProneTimeline->ReverseFromEnd();		
-		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 		break;
 	case ECharacterMotion::Crouch:
 		CrouchTimeline->PlayFromStart();
@@ -226,14 +233,19 @@ void APSCharacter::ReleaseControlRotation()
 
 void APSCharacter::DoCrouch()
 {
+	if (IsCrouch || IsProne)
+		return;
+
 	if (CurrentCharacterMotion == ECharacterMotion::Stand && !GetCharacterMovement()->IsFalling())
 	{
+		IsCrouch = true;
 		SetCharacterMotion(ECharacterMotion::Crouch);
 	}
 	else if (CurrentCharacterMotion == ECharacterMotion::Crouch)
 	{
 		if (!CanStand(CrouchHalfHeight))
 		{
+			IsCrouch = true;
 			SetCharacterMotion(ECharacterMotion::Stand);
 		}
 		else
@@ -250,14 +262,19 @@ void APSCharacter::DoCrouch()
 
 void APSCharacter::DoProne()
 {
+	if (IsCrouch || IsProne)
+		return;
+
 	if (CurrentCharacterMotion == ECharacterMotion::Stand && !GetCharacterMovement()->IsFalling())
 	{
+		IsProne = true;
 		SetCharacterMotion(ECharacterMotion::Prone);
 	}
 	else if (CurrentCharacterMotion == ECharacterMotion::Prone)
 	{
 		if (!CanStand(ProneHalfHeight))
 		{
+			IsProne = true;
 			SetCharacterMotion(ECharacterMotion::Stand);
 		}
 		else
@@ -335,10 +352,28 @@ void APSCharacter::CrouchInterp(float Value)
 }
 
 
+void APSCharacter::CrouchFinish()
+{
+	IsCrouch = false;
+
+	if (CurrentCharacterMotion == ECharacterMotion::Stand)
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+}
+
+
 void APSCharacter::ProneInterp(float Value)
 {
 	GetCapsuleComponent()->SetCapsuleHalfHeight(FMath::Lerp(StandHalfHeight, ProneHalfHeight, Value));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, FMath::Lerp(-StandHalfHeight, -ProneHalfHeight, Value)));
+}
+
+
+void APSCharacter::ProneFinish()
+{
+	IsProne = false;
+
+	if (CurrentCharacterMotion == ECharacterMotion::Stand)
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 }
 
 
