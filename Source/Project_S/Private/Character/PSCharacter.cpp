@@ -78,7 +78,7 @@ APSCharacter::APSCharacter()
 		GetMesh()->SetAnimInstanceClass(Mannequin_Anim.Class);
 	}
 
-	// Set Crouch interp
+	// Set Crouch timeline
 	CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CROUCHTIMELINE"));
 	CrouchTimelineFunction.BindUFunction(this, FName("CrouchInterp"));
 	CrouchTimelineFinish.BindUFunction(this, FName("CrouchFinish"));
@@ -92,7 +92,7 @@ APSCharacter::APSCharacter()
 	}
 	CrouchTimeline->SetLooping(false);
 
-	// Set Prone Interp
+	// Set Prone timeline
 	ProneTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("PRONETIMELINE"));
 	ProneTimelineFunction.BindUFunction(this, FName("ProneInterp"));
 	ProneTimelineFinish.BindUFunction(this, FName("ProneFinish"));
