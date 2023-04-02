@@ -26,6 +26,9 @@ public:
 	void Attack();
 	ECharacterMotion GetCurrentCharacterMotion();
 
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -93,7 +96,8 @@ public:
 	bool Running;
 
 protected:
-	ECharacterMotion CurrentCharacterMotion;
+	UPROPERTY(Replicated)
+		ECharacterMotion CurrentCharacterMotion;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Timeline")
 		UTimelineComponent* CrouchTimeline;

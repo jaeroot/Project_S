@@ -2,6 +2,7 @@
 
 
 #include "Character/PSCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -445,4 +446,12 @@ bool APSCharacter::CanStand(float HalfHeight)
 # endif
 
 	return bResult;
+}
+
+
+void APSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APSCharacter, CurrentCharacterMotion);
 }
