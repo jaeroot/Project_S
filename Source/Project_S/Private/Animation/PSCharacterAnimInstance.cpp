@@ -2,6 +2,8 @@
 
 
 #include "Animation/PSCharacterAnimInstance.h"
+
+#include "KismetAnimationLibrary.h"
 #include "Character/PSCharacter.h"
 
 
@@ -25,7 +27,7 @@ void UPSCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	CurrentPawnVelocity = Pawn->GetVelocity();
 	CurrentPawnSpeed = CurrentPawnVelocity.Size();
-	CurrentPawnDirection = CalculateDirection(CurrentPawnVelocity, Pawn->GetActorRotation());
+	CurrentPawnDirection = UKismetAnimationLibrary::CalculateDirection(CurrentPawnVelocity, Pawn->GetActorRotation());
 
 	auto Character = Cast<APSCharacter>(Pawn);
 	if (Character)

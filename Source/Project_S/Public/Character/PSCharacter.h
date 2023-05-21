@@ -26,9 +26,6 @@ public:
 	void Attack();
 	ECharacterMotion GetCurrentCharacterMotion();
 
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -42,6 +39,7 @@ private:
 	void DoProne();
 	void Run();
 	void StopRun();
+	void PossessVehicle();
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
@@ -78,10 +76,10 @@ private:
 
 
 public:
-	UPROPERTY(VisibleAnywhere, Category = Camera)
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
 		USpringArmComponent* SpringArm;
 
-	UPROPERTY(VisibleAnywhere, Category = Camera)
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
 		UCameraComponent* Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
@@ -123,4 +121,8 @@ private:
 
 	bool IsCrouch;
 	bool IsProne;
+
+
+	public:
+		virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 };

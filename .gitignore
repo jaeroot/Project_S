@@ -1,7 +1,8 @@
 # Visual Studio 2015 user specific files
 .vs/
 
-Content/AutomotiveWinterScene/*
+# Rider files
+.idea/
 
 # Compiled Object files
 *.slo

@@ -3,6 +3,7 @@
 
 #include "Character/PSCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Vehicle/PSVehicle.h"
 
 
 // Sets default values
@@ -122,10 +123,11 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("Prone"), EInputEvent::IE_Pressed, this, &APSCharacter::DoProne);
 	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Pressed, this, &APSCharacter::Run);
 	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Released, this, &APSCharacter::StopRun);
+	PlayerInputComponent->BindAction(TEXT("PossessVehicle"), EInputEvent::IE_Pressed, this, &APSCharacter::PossessVehicle);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &APSCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &APSCharacter::LeftRight);
-	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APSCharacter::LookUp);
+	PlayerInputComponent->BindAxis(TEXT("LookUP"), this, &APSCharacter::LookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APSCharacter::Turn);
 }
 
@@ -305,6 +307,17 @@ void APSCharacter::Run()
 void APSCharacter::StopRun()
 {
 	RunInput = false;
+}
+
+void APSCharacter::PossessVehicle()
+{
+	// Experimental Function
+	UWorld* World = GetWorld();
+	SetActorEnableCollision(false);
+	auto Vehicle = World->SpawnActor<APSVehicle>(APSVehicle::StaticClass(), GetActorLocation(), GetActorRotation());
+	AttachToActor(Vehicle, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("Player"));
+	Vehicle->Character = this;
+	Controller->Possess(Vehicle);
 }
 
 
