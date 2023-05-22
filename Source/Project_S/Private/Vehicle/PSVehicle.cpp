@@ -67,7 +67,6 @@ APSVehicle::APSVehicle()
 	for (auto WheelScene : WheelSceneComponentHolder)
 	{
 		WheelScene->SetRelativeLocation(FVector(55.0f, 0.0f, 0.0f));
-		WheelScene->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f));
 	}
 
 	// Set Wheel Mesh
@@ -170,26 +169,19 @@ void APSVehicle::UpdateVehicleForce(int WheelIndex, float DeltaTime)
 	float CurrentSpringLength = WheelSceneComponentHolder[WheelIndex]->GetRelativeLocation().X;
 	float CurrentSteeringAngle = UKismetMathLibrary::MapRangeClamped(RightAxisValue, -1, 1, MaxSteeringAngle * (-1), MaxSteeringAngle);
 
+	// Suspension, Damper
 	if (HitResult.IsValidBlockingHit())
 	{
-		FVector SpringDir = WheelSceneComponentHolder[WheelIndex]->GetUpVector();
+		// FVector SpringDir = -WheelArrowComponentHolder[WheelIndex]->GetUpVector();
+		FVector SpringDir = GetActorUpVector();
 		// FVector VehicleLinearVelocity = VehicleMesh->GetPhysicsLinearVelocityAtPoint(WheelMeshComponentHolder[WheelIndex]->GetComponentLocation());
 		float LastSpringLength = CurrentSpringLength;
 		CurrentSpringLength = UKismetMathLibrary::Clamp(HitResult.Distance - WheelRadius, MinLength, MaxLength);
 		float Offset = RestLength - CurrentSpringLength;
-		float Velocity = (LastSpringLength - CurrentSpringLength) / DeltaTime;
-		float Force = (Offset * SpringForceConst) + (Velocity * DamperForceConst);
+		float Velocity = (CurrentSpringLength - LastSpringLength) / DeltaTime;
+		float Force = (Offset * SpringForceConst) - (Velocity * DamperForceConst);
 
-		if (WheelIndex < 2)
-		{
-			WheelSceneComponentHolder[WheelIndex]->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentSteeringAngle));
-		}
-
-		if (VehicleMesh->GetPhysicsLinearVelocity().Size() * 0.036 > 5)
-		{
-			// VehicleMesh->AddTorqueInDegrees(FVector(0.0f, 0.0f, CurrentSpringLength), NAME_None, true);
-		}
-		
+		// WheelSceneComponentHolder[WheelIndex]->AddRelativeLocation(SpringDir);
 		VehicleMesh->AddForceAtLocation(SpringDir * Force, WheelSceneComponentHolder[WheelIndex]->GetComponentLocation());
 	}
 	else
@@ -197,13 +189,32 @@ void APSVehicle::UpdateVehicleForce(int WheelIndex, float DeltaTime)
 		CurrentSpringLength = MaxLength;
 	}
 
-	FVector VehicleForwardForce = GetActorForwardVector() * ForwardAxisValue * ForwardForceConst;
+	// MoveForward, Brake
+	FVector VehicleForwardForce = GetActorForwardVector() * ForwardAxisValue * ForwardForceConst;	
 	if (bBrakeApplied)
 	{
 		VehicleForwardForce = VehicleMesh->GetPhysicsLinearVelocity() * (-1) * BrakeConst;
 	}
 	VehicleMesh->AddForce(VehicleForwardForce);
-	
+
+	// Steering
+	if (VehicleMesh->GetPhysicsLinearVelocity().Size() * 0.036 > 5)
+	{
+		if (ForwardAxisValue > 0)
+		{
+			VehicleMesh->AddTorqueInDegrees(FVector(0.0f, 0.0f, CurrentSteeringAngle), NAME_None, true);
+		}
+		else
+		{
+			VehicleMesh->AddTorqueInDegrees(FVector(0.0f, 0.0f, -CurrentSteeringAngle), NAME_None, true);
+		}
+	}
+
+	// Wheel Location and Rotation
+	if (WheelIndex < 2)
+	{
+		WheelSceneComponentHolder[WheelIndex]->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentSteeringAngle));
+	}
 	WheelSceneComponentHolder[WheelIndex]->SetRelativeLocation(FVector(CurrentSpringLength, 0.0f, 0.0f));
 	WheelSceneComponentHolder[WheelIndex]->GetChildComponent(0)->AddLocalRotation(FRotator((-1) * 360 * VehicleMesh->GetPhysicsLinearVelocity().X * DeltaTime / (2 * 3.14 * WheelRadius), 0.0f, 0.0f));
 }
