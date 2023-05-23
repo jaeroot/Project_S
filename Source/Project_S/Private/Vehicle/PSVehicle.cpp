@@ -128,12 +128,13 @@ void APSVehicle::Tick(float DeltaTime)
 
 	for (int WheelIndex = 0; WheelIndex < MaxWheelNum; WheelIndex++)
 	{
-		UpdateVehicleForce(WheelIndex, DeltaTime);
+		UpdateVehicleSuspension(WheelIndex, DeltaTime);
 	}
+	UpdateVehicleForce();
 
 }
 
-void APSVehicle::UpdateVehicleForce(int WheelIndex, float DeltaTime)
+void APSVehicle::UpdateVehicleSuspension(int WheelIndex, float DeltaTime)
 {
 	if (!WheelMeshComponentHolder.IsValidIndex(WheelIndex) || !WheelSceneComponentHolder.IsValidIndex(WheelIndex) || !WheelMeshComponentHolder.IsValidIndex(WheelIndex))
 	{
@@ -189,6 +190,19 @@ void APSVehicle::UpdateVehicleForce(int WheelIndex, float DeltaTime)
 		CurrentSpringLength = MaxLength;
 	}
 
+	// Wheel Location and Rotation
+	if (WheelIndex < 2)
+	{
+		WheelSceneComponentHolder[WheelIndex]->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentSteeringAngle));
+	}
+	WheelSceneComponentHolder[WheelIndex]->SetRelativeLocation(FVector(CurrentSpringLength, 0.0f, 0.0f));
+	WheelSceneComponentHolder[WheelIndex]->GetChildComponent(0)->AddLocalRotation(FRotator((-1) * 360 * VehicleMesh->GetPhysicsLinearVelocity().X * DeltaTime / (2 * 3.14 * WheelRadius), 0.0f, 0.0f));
+}
+
+void APSVehicle::UpdateVehicleForce()
+{
+	float CurrentSteeringAngle = UKismetMathLibrary::MapRangeClamped(RightAxisValue, -1, 1, MaxSteeringAngle * (-1), MaxSteeringAngle);
+	
 	// MoveForward, Brake
 	FVector VehicleForwardForce = GetActorForwardVector() * ForwardAxisValue * ForwardForceConst;	
 	if (bBrakeApplied)
@@ -209,14 +223,6 @@ void APSVehicle::UpdateVehicleForce(int WheelIndex, float DeltaTime)
 			VehicleMesh->AddTorqueInDegrees(FVector(0.0f, 0.0f, -CurrentSteeringAngle), NAME_None, true);
 		}
 	}
-
-	// Wheel Location and Rotation
-	if (WheelIndex < 2)
-	{
-		WheelSceneComponentHolder[WheelIndex]->SetRelativeRotation(FRotator(0.0f, 0.0f, CurrentSteeringAngle));
-	}
-	WheelSceneComponentHolder[WheelIndex]->SetRelativeLocation(FVector(CurrentSpringLength, 0.0f, 0.0f));
-	WheelSceneComponentHolder[WheelIndex]->GetChildComponent(0)->AddLocalRotation(FRotator((-1) * 360 * VehicleMesh->GetPhysicsLinearVelocity().X * DeltaTime / (2 * 3.14 * WheelRadius), 0.0f, 0.0f));
 }
 
 void APSVehicle::MoveForward(float Value)

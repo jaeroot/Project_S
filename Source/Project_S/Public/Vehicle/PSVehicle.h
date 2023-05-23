@@ -28,7 +28,8 @@ protected:
 	virtual void UnPossessed() override;
 
 private:
-	void UpdateVehicleForce(int WheelIndex, float DeltaTime);
+	void UpdateVehicleSuspension(int WheelIndex, float DeltaTime);
+	void UpdateVehicleForce();
 	
 	void MoveForward(float Value);
 	void MoveRight(float Value);
