@@ -99,7 +99,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Vehicle")
 	float BrakeConst = 1000;
 
-	class APSCharacter* Character;
+	class APSCharacter* Character;	
 	
 protected:
 	enum class EWheelIndex
@@ -111,6 +111,9 @@ protected:
 	};
 
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	class UPSVehicleMovementComponent* VehicleMovementComponent;
+	
 	TArray<UArrowComponent*> WheelArrowComponentHolder;
 	TArray<USceneComponent*> WheelSceneComponentHolder;
 	TArray<UStaticMeshComponent*> WheelMeshComponentHolder;

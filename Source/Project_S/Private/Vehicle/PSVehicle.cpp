@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "Character/PSCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Vehicle/PSVehicleMovementComponent.h"
 
 APSVehicle::APSVehicle()
 {
@@ -39,13 +40,13 @@ APSVehicle::APSVehicle()
 
 	// Set Arrow
 	Arrow_FR = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow_FR"));
-	Arrow_FR->SetupAttachment(VehicleMesh, FName("WheelFR"));
+	Arrow_FR->SetupAttachment(VehicleMesh, FName("Wheel_FR"));
 	Arrow_FL = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow_FL"));
-	Arrow_FL->SetupAttachment(VehicleMesh, FName("WheelFL"));
+	Arrow_FL->SetupAttachment(VehicleMesh, FName("Wheel_FL"));
 	Arrow_RR = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow_RR"));
-	Arrow_RR->SetupAttachment(VehicleMesh, FName("WheelRR"));
+	Arrow_RR->SetupAttachment(VehicleMesh, FName("Wheel_RR"));
 	Arrow_RL = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow_RL"));
-	Arrow_RL->SetupAttachment(VehicleMesh, FName("WheelRL"));
+	Arrow_RL->SetupAttachment(VehicleMesh, FName("Wheel_RL"));
 	
 	WheelArrowComponentHolder = {Arrow_FR, Arrow_FL, Arrow_RR, Arrow_RL};
 	for (auto Arrow : WheelArrowComponentHolder)
@@ -90,6 +91,9 @@ APSVehicle::APSVehicle()
 		}
 	}
 
+	// Set Vehicle Movement Component
+	VehicleMovementComponent = CreateDefaultSubobject<UPSVehicleMovementComponent>(TEXT("VehicleMovementComponent"));
+	
 
 }
 
@@ -136,7 +140,7 @@ void APSVehicle::Tick(float DeltaTime)
 
 void APSVehicle::UpdateVehicleSuspension(int WheelIndex, float DeltaTime)
 {
-	if (!WheelMeshComponentHolder.IsValidIndex(WheelIndex) || !WheelSceneComponentHolder.IsValidIndex(WheelIndex) || !WheelMeshComponentHolder.IsValidIndex(WheelIndex))
+	if (!WheelArrowComponentHolder.IsValidIndex(WheelIndex) || !WheelSceneComponentHolder.IsValidIndex(WheelIndex) || !WheelMeshComponentHolder.IsValidIndex(WheelIndex))
 	{
 		return;
 	}
