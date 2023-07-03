@@ -155,9 +155,6 @@ void APSCharacter::Tick(float DeltaTime)
 		else if (!IsCrouch && !IsProne)
 		{
 			SetRun(false);
-	
-			if (CurrentCharacterMotion == ECharacterMotion::Stand)
-				GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 		}
 	}
 }
@@ -210,6 +207,7 @@ void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
 		Crouched = true;
 
 	CurrentCharacterMotion = NewCharacterMotion;
+	ServerSetCharacterMotion(NewCharacterMotion);
 
 	switch (CurrentCharacterMotion)
 	{
@@ -227,6 +225,11 @@ void APSCharacter::SetCharacterMotion(ECharacterMotion NewCharacterMotion)
 	default:
 		break;
 	}
+}
+
+void APSCharacter::ServerSetCharacterMotion_Implementation(ECharacterMotion NewCharacterMotion)
+{
+	CurrentCharacterMotion = NewCharacterMotion;
 }
 
 
@@ -486,6 +489,11 @@ void APSCharacter::SetRun(bool bIsRun)
 {
 	Running = bIsRun;
 	GetCharacterMovement()->MaxWalkSpeed = bIsRun ? 1800.0f : 600.0f;
+
+	if (CurrentCharacterMotion == ECharacterMotion::Crouch)
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	else if (CurrentCharacterMotion == ECharacterMotion::Prone)
+		GetCharacterMovement()->MaxWalkSpeed = 150.0f;
 	
 	ServerSetRun(bIsRun);
 }
@@ -494,4 +502,9 @@ void APSCharacter::ServerSetRun_Implementation(bool bIsRun)
 {
 	Running = bIsRun;
 	GetCharacterMovement()->MaxWalkSpeed = bIsRun ? 1800.0f : 600.0f;
+
+	if (CurrentCharacterMotion == ECharacterMotion::Crouch)
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	else if (CurrentCharacterMotion == ECharacterMotion::Prone)
+		GetCharacterMovement()->MaxWalkSpeed = 150.0f;
 }

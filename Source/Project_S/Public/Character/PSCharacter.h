@@ -27,6 +27,9 @@ protected:
 
 	void SetCharacterMotion(ECharacterMotion NewCharacterMotion);
 
+	UFUNCTION(Server, Reliable)
+	void ServerSetCharacterMotion(ECharacterMotion NewCharacterMotion);
+
 private:
 	void BlockControlRotation();
 	void ReleaseControlRotation();
