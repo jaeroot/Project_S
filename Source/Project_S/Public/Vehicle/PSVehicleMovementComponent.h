@@ -8,6 +8,22 @@
 
 class APSVehicleWheel;
 
+UENUM()
+enum class EWheelCollisionDetectType
+{
+	SingleRayCast,
+	MultipleRayCast,
+	SphereCast
+};
+
+UENUM()
+enum class EWheelDriveType
+{
+	Front,
+	Rear,
+	All
+};
+
 USTRUCT()
 struct FVehicleWheel
 {
@@ -32,18 +48,23 @@ public:
 	UPSVehicleMovementComponent();
 	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	void UpdateVehicleMovement();
 	
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	void UpdateVehicleMovement();
 	void UpdateVehicleSuspension();
 	void UpdateVehicleSteering();
 	void UpdateVehicleForce();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Vehicle")
+	EWheelCollisionDetectType WheelCollisionDetectType = EWheelCollisionDetectType::SingleRayCast;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Vehicle")
+	EWheelDriveType VehicleDriveType = EWheelDriveType::All;
+	
 	UPROPERTY(EditAnywhere, Category = "VehicleWheel")
 	TArray<FVehicleWheel> VehicleWheels;
 

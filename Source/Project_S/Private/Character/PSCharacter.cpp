@@ -11,6 +11,7 @@ APSCharacter::APSCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	// bReplicates = true;
 
 	// Set Collision Capsule
 	StandHalfHeight = 100.0f;
@@ -110,6 +111,15 @@ APSCharacter::APSCharacter()
 }
 
 
+void APSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APSCharacter, CurrentCharacterMotion);
+	DOREPLIFETIME(APSCharacter, Running);
+}
+
+
 // Called to bind functionality to input
 void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -121,8 +131,8 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("ControlRotation"), EInputEvent::IE_Released, this, &APSCharacter::ReleaseControlRotation);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &APSCharacter::DoCrouch);
 	PlayerInputComponent->BindAction(TEXT("Prone"), EInputEvent::IE_Pressed, this, &APSCharacter::DoProne);
-	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Pressed, this, &APSCharacter::Run);
-	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Released, this, &APSCharacter::StopRun);
+	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Pressed, this, &APSCharacter::RunButtonPressed);
+	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Released, this, &APSCharacter::RunButtonReleased);
 	PlayerInputComponent->BindAction(TEXT("PossessVehicle"), EInputEvent::IE_Pressed, this, &APSCharacter::PossessVehicle);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &APSCharacter::UpDown);
@@ -132,22 +142,23 @@ void APSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 }
 
 
-// Called every frame
 void APSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!MovingBack && !MovingSide && RunInput && CurrentCharacterMotion == ECharacterMotion::Stand && !IsCrouch && !IsProne)
+	if (IsLocallyControlled())
 	{
-		Running = true;
-		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
-	}
-	else if (!IsCrouch && !IsProne)
-	{
-		Running = false;
-
-		if (CurrentCharacterMotion == ECharacterMotion::Stand)
-			GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		if (!MovingBack && !MovingSide && RunInput && CurrentCharacterMotion == ECharacterMotion::Stand && !IsCrouch && !IsProne)
+		{
+			SetRun(true);
+		}
+		else if (!IsCrouch && !IsProne)
+		{
+			SetRun(false);
+	
+			if (CurrentCharacterMotion == ECharacterMotion::Stand)
+				GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		}
 	}
 }
 
@@ -183,7 +194,6 @@ ECharacterMotion APSCharacter::GetCurrentCharacterMotion()
 }
 
 
-// Called when the game starts or when spawned
 void APSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -298,16 +308,16 @@ void APSCharacter::DoProne()
 }
 
 
-void APSCharacter::Run()
+void APSCharacter::RunButtonPressed()
 {
-	RunInput = true;
+	SetRunInput(true);
 }
 
-
-void APSCharacter::StopRun()
+void APSCharacter::RunButtonReleased()
 {
-	RunInput = false;
+	SetRunInput(false);
 }
+
 
 void APSCharacter::PossessVehicle()
 {
@@ -461,10 +471,27 @@ bool APSCharacter::CanStand(float HalfHeight)
 	return bResult;
 }
 
-
-void APSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APSCharacter::SetRunInput(bool bIsRunInput)
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	RunInput = bIsRunInput;
+	ServerSetRunInput(bIsRunInput);
+}
 
-	DOREPLIFETIME(APSCharacter, CurrentCharacterMotion);
+void APSCharacter::ServerSetRunInput_Implementation(bool bIsRunInput)
+{
+	RunInput = bIsRunInput;
+}
+
+void APSCharacter::SetRun(bool bIsRun)
+{
+	Running = bIsRun;
+	GetCharacterMovement()->MaxWalkSpeed = bIsRun ? 1800.0f : 600.0f;
+	
+	ServerSetRun(bIsRun);
+}
+
+void APSCharacter::ServerSetRun_Implementation(bool bIsRun)
+{
+	Running = bIsRun;
+	GetCharacterMovement()->MaxWalkSpeed = bIsRun ? 1800.0f : 600.0f;
 }

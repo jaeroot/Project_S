@@ -6,13 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PSVehicleWheel.generated.h"
 
-UENUM()
-enum class EWheelCollisionDetectType
-{
-	SingleRayCast,
-	MultipleRayCast,
-	SphereCast
-};
+
 
 UENUM()
 enum class EWheelPosition : uint8
@@ -47,8 +41,6 @@ public:
 
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel")
-	EWheelCollisionDetectType WheelCollisionDetectType = EWheelCollisionDetectType::SingleRayCast;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel")
 	float WheelRadius = 31.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel")
 	EWheelPosition WheelPos = EWheelPosition::Undefined;
@@ -69,7 +61,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Brake")
 	float BrakeConst = 1000;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Brake")
-	bool bBrake = false;
+	bool bBrake = true;
 
 protected:
 

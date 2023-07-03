@@ -13,21 +13,16 @@ class PROJECT_S_API APSCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	APSCharacter();
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void Jump() override;
 	void Attack();
 	ECharacterMotion GetCurrentCharacterMotion();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void SetCharacterMotion(ECharacterMotion NewCharacterMotion);
@@ -37,8 +32,8 @@ private:
 	void ReleaseControlRotation();
 	void DoCrouch();
 	void DoProne();
-	void Run();
-	void StopRun();
+	void RunButtonPressed();
+	void RunButtonReleased();
 	void PossessVehicle();
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
@@ -74,6 +69,13 @@ private:
 
 	bool CanStand(float HalfHeight);
 
+	void SetRunInput(bool bIsRunInput);
+	UFUNCTION(Server, Reliable)
+	void ServerSetRunInput(bool bIsRunInput);
+
+	void SetRun(bool bIsRun);
+	UFUNCTION(Server, Reliable)
+	void ServerSetRun(bool bIsRun);
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -91,6 +93,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 		UCurveFloat* CameraRotCurve;
 
+	UPROPERTY(Replicated)
 	bool Running;
 
 protected:
@@ -115,14 +118,11 @@ private:
 	float ProneHalfHeight;
 	float Radius;
 
+	UPROPERTY(Replicated)
 	bool RunInput;
 	bool MovingBack;
 	bool MovingSide;
 
 	bool IsCrouch;
 	bool IsProne;
-
-
-	public:
-		virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 };
